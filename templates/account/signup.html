@@ -1,0 +1,27 @@
+{% extends '_base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <main>
+        <div class="py-5 text-center">
+            <h2>Sign up!</h2>
+            <p class="lead text-danger">
+                {% if error %}
+                {{ error }}
+                {% endif %}
+            </p>
+        </div>
+        <div class="row justify-content-md-center">
+            <div class="col col-lg-2"></div>
+            <div class="col-md-auto">
+                <h4 class="mb-3">Fill the form and register</h4>
+                <form method="post">{% csrf_token %}
+                    {{ form|crispy }}
+                    <input class="w-100 btn btn-success btn-lg" type="submit" value="Sign up!"></input>
+                </form>
+            </div>
+            <div class="col col-lg-2"></div>
+        </div>
+    </main>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "_base.html" %}
+{% block content %}
+
+<main>
+    <div class="container px-4 py-5">
+        <div class="p-5 mb-4 bg-light rounded-3">
+            <div class="container-fluid py-5">
+                <h2 class="display-5 fw-bold">Find books:</h2>
+                <div class="input-group mb-3 ">
+                    <form class="d-flex" action="{% url 'find_books' %}" method="get">
+                        <input type="search" name="q" class="form-control"
+                            placeholder="Books title, subtitle or author name" aria-label="Book's title"
+                            aria-describedby="basic-addon2">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-success" type="submit">Find</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% for book in books_list %}
+    <div class="container px-4 py-5">
+        <div class="row row-cols-1 row-cols-md-2 align-items-md-center g-5 py-5">
+            <div class="row row-cols-1 row-cols-sm-2 g-4">
+                <div class="d-flex flex-column gap-2">
+                    <h2><a href="{{ book.get_absolute_url }}">{{ book.title }}</a></h2>
+                    <h3>{{ book.get_authors_str }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</main>
+
+{% endblock content %}

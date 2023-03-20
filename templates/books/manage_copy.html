@@ -1,0 +1,30 @@
+{% extends '_base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+{% if user.is_staff %}
+<main>
+    <div class="container px-4 py-5">
+        <div class="p-5 mb-4 bg-light rounded-3">
+            <div class="container-fluid py-5">
+                <h1 class="display-5 fw-bold">Book management</h1>
+                <form action="." method="POST"> {% csrf_token %}
+                    {{ form.book_copy_decision | as_crispy_field }}
+                    {{ form.state | as_crispy_field }}
+                    <input class="w-100 btn btn-lg btn-success" type="submit" value="Submit"></input>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% else %}
+<main>
+    <div class="container px-4 py-5">
+        <div class="p-5 mb-4 bg-light rounded-3">
+            <div class="container-fluid py-5">
+                <h1 class="display-5 fw-bold">Respect my autoritahhhh</h1>
+            </div>
+        </div>
+    </div>
+</main>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+{% block content %}
+{% for book in books_list %}
+<main>
+    <div class="container px-4 py-5">
+        <div class="row row-cols-1 row-cols-md-2 align-items-md-center g-5 py-5">
+            <div class="row row-cols-1 row-cols-sm-2 g-4">
+                <div class="d-flex flex-column gap-2">
+                    <h2><a href="{{ book.get_absolute_url }}">{{ book.title }}</a></h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endfor %}
+{% endblock content %}

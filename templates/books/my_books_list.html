@@ -1,0 +1,41 @@
+{% extends '_base.html' %}
+{% block content %}
+<main>
+    <div class="container px-4 py-5">
+        <h2 class="pb-2 border-bottom">Currently you reserved these books:</h2>
+
+        <div class="row row-cols-1 row-cols-md-2 align-items-md-center g-5 py-5">
+            {% for copy in my_reserved_copies %}
+            <div class="row row-cols-1 row-cols-sm-2 g-4">
+                <div class="d-flex flex-column gap-2">
+                    <div
+                        class="feature-icon-small d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-4 rounded-3">
+                        <svg class="bi" width="1em" height="1em">
+                            <use xlink:href="#collection" />
+                        </svg>
+                    </div>
+                    <h4 class="fw-semibold mb-0"><a href="{{ copy.get_absolute_url }}">{{ copy.book.title }}</a></h4>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <h2 class="pb-2 border-bottom">Currently you hold these books:</h2>
+
+        <div class="row row-cols-1 row-cols-md-2 align-items-md-center g-5 py-5">
+            {% for copy in my_borrowed_copies %}
+            <div class="row row-cols-1 row-cols-sm-2 g-4">
+                <div class="d-flex flex-column gap-2">
+                    <div
+                        class="feature-icon-small d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-4 rounded-3">
+                        <svg class="bi" width="1em" height="1em">
+                            <use xlink:href="#collection" />
+                        </svg>
+                    </div>
+                    <h4 class="fw-semibold mb-0"><a href="{{ copy.get_absolute_url }}">{{ copy.book.title }}</a></h4>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+{% endblock %}

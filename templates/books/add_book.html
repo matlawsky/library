@@ -1,0 +1,45 @@
+{% extends '_base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+{% if user.is_authenticated %}
+{% if user.is_staff %}
+<main>
+    <div class="container px-4 py-5">
+
+        <h2 class="pb-2 border-bottom">Add new book </h2>
+        <div class="row justify-content-md-center">
+            <div class="col col-lg-2"></div>
+            <div class="col-md-auto">
+                <div class="form-floating">
+                    <form action="." method="POST"> {% csrf_token %}
+                        {{ form.title | as_crispy_field }}
+                        {{ form.subtitle | as_crispy_field }}
+                        {{ form.authors | as_crispy_field }}
+                        {{ form.description | as_crispy_field }}
+                        {{ form.published_date | as_crispy_field }}
+                        {{ form.page_count | as_crispy_field }}
+                        {{ form.image_url | as_crispy_field }}
+                        {{ form.number_of_copies | as_crispy_field}}
+                        <input class="w-100 btn btn-lg btn-success" type="submit" value="Add book"></input>
+                    </form>
+                </div>
+            </div>
+            <div class="col col-lg-2"></div>
+        </div>
+    </div>
+</main>
+{% else %}
+<main>
+    <div class="container px-4 py-5">
+        <h2 class="pb-2 border-bottom">Respect my autoritahhhh</h2>
+    </div>
+</main>
+{% endif %}
+{% else %}
+<main>
+    <div class="container px-4 py-5">
+        <h2 class="pb-2 border-bottom">You are not a user</h2>
+    </div>
+</main>
+{% endif %}
+{% endblock %}

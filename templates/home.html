@@ -1,0 +1,40 @@
+{% extends '_base.html'%}
+
+{% block content %}
+<div class="album py-5 bg-light">
+    <h2 class="display-7 fw-normal text-center">BESTSELLERS</h2>
+    <div class="container">
+
+        <div class="col-sm"></div>
+        <div class="col-sm">
+            {% for book in books_list %}
+            <div class="row">
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+                    <div class="col">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <b>
+                                    <h5><a href="{{ book.get_absolute_url }}">{{ book.title }}</a></h5>
+                                </b>
+                                {% if check_if_authors_none %}
+                                <b>Unknown</b>
+                                {% else %}
+                                <b>Author: {{ book.get_authors_str }}</b>
+                                {% endif %}
+                                <p class="card-text">{{ book.get_teaser }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">{{ book.page_count }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="col-sm"></div>
+    </div>
+
+</div>
+{% endblock %}

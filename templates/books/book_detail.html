@@ -1,0 +1,71 @@
+<!-- templates/books/book_detail.html -->
+{% extends "_base.html" %}
+{% load static %}
+{% block content %}
+<style>
+    table {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    td,
+    th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+
+    tr:nth-child(even) {
+        background-color: #dddddd;
+    }
+</style>
+<main>
+    <div class="container px-4 py-5">
+        <h2 class="pb-2 border-bottom">{{ object.title }}</h2>
+        <img src="{{ object.image_url }}">
+        <p>Subtitle: {{ object.subtitle }}</p>
+        <p>Authors:
+            {% for author in object.get_authors_list %}
+            {{ author }}
+            {% endfor %}
+        </p>
+        <p>Description: {{ object.description }}</p>
+        <p>Published on: {{ object.published_date }}</p>
+        <p>Page Count: {{object.page_count}} </p>
+        {% if user.is_authenticated %}
+        <h2>Copies</h2>
+        <table>
+            <tr>
+                <th>Title</th>
+                <th>State</th>
+                <th>Possession</th>
+            </tr>
+            {% for copy in object.get_copies_list %}
+            {% if copy.is_not_borrowed %}
+            {% if copy.is_not_reserved %}
+            <tr>
+                <td>{{ object.title }}</td>
+                <td>{{ copy.state }}</td>
+                <td>
+                    <button class="btn btn-warning" type="button">
+                        <a href="{{ copy.get_absolute_url }}">Availability</a>
+                    </button>
+                </td>
+            </tr>
+            {% endif%}
+            {% else %}
+            {% endif %}
+            {% endfor %}
+        </table>
+        {% if user.is_staff %}
+        <br>
+        <button class="btn btn-warning" type="button">
+            <a href="{{ object.get_absolute_url_with_new_copy }}">Add copy</a>
+        </button>
+        <br>
+        {% endif %}
+        {% endif %}
+    </div>
+</main>
+{% endblock content %}

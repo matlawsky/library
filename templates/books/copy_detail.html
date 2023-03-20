@@ -1,0 +1,38 @@
+{% extends '_base.html' %}
+{% block content %}
+{% if user %}
+<main>
+    <div class="container px-4 py-5">
+        <div class="p-5 mb-4 bg-light runded-3">
+            <div class="container-fluid py-5">
+                <h2 class="display-5 fw-bold">Copy book title: {{ object.book.title }}</h2>
+
+                {% if user.is_staff %}
+                <h4>State: {{ object.state }}</h4>
+                <h4>Reserved for: {{ object.reserved_for }}</h4>
+                <h4>Borrowed by: {{ object.holder }}</h4>
+                <button class="btn btn-warning" type="button">
+                    <a href="{% url 'copy_manage' copy.id %}">Manage</a>
+                </button>
+
+                {% endif %}
+
+                <button class="btn btn-warning" type="button">
+                    <a href="{% url 'copy_reserve' copy.id %}">Reservation</a>
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+{% else %}
+<main>
+    <div class="container px-4 py-5">
+        <div class="p-5 mb-4 bg-light rounded-3">
+            <div class="container-fluid py-5">
+                <h1 class="display-5 fw-bold">Respect my autoritahhhh</h1>
+            </div>
+        </div>
+    </div>
+</main>
+{% endif %}
+{% endblock %}

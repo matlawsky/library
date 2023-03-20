@@ -1,0 +1,45 @@
+{% extends '_base.html'%}
+{% load crispy_forms_tags %}
+{% block content %}
+<main class="form-signin w-100 m-auto">
+    <br>
+    <div class="row justify-content-md-center">
+        <div class="col col-lg-2"></div>
+        <div class="col-md-auto">
+            <h2 class="h1 col-md-auto">Log in to LIBRARY</h2>
+        </div>
+        <div class="col col-lg-2"></div>
+    </div>
+    <br>
+    <br>
+    <div class="row justify-content-md-center">
+        <div class="col col-lg-2"></div>
+        <div class="col-md-auto">
+            <h5 class="h1 col-md-auto">If you forget your password: <a type="text" class="text-bg-danger"
+                    href="{% url 'account_reset_password' %}">Click Here</a></h5>
+        </div>
+        <div class="col col-lg-2"></div>
+    </div>
+    <br>
+    <div class="py-5 text-center">
+        <p class="lead text-danger">
+            {% if error %}
+            {{ error }}
+            {% endif %}
+        </p>
+    </div>
+    <br>
+    <div class="row justify-content-md-center">
+        <div class="col col-lg-2"></div>
+        <div class="col-md-auto">
+            <div class="form-floating">
+                <form method="post"> {% csrf_token %}
+                    {{ form|crispy }}
+                    <input class="w-100 btn btn-lg btn-success" type="submit" value="Log in"></input>
+                </form>
+            </div>
+        </div>
+        <div class="col col-lg-2"></div>
+    </div>
+</main>
+{% endblock %}
