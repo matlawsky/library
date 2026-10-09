@@ -14,5 +14,6 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
 MIDDLEWARE = [m for m in MIDDLEWARE if "debug_toolbar" not in m]
-STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+STORAGES = {"default": {"BACKEND": "django.core.files.storage.FileSystemStorage"}, "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}}
+ACCOUNT_RATE_LIMITS = {}
 ACCOUNT_EMAIL_VERIFICATION = "optional"

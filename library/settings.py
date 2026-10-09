@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
     # debug tool for optimization
-    "debug_toolbar",
     # django allauth
     "allauth",
     "allauth.account",
@@ -85,12 +84,12 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STORAGES = {"default": {"BACKEND": "django.core.files.storage.FileSystemStorage"}, "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"}}
 
 SECURE_HSTS_SECONDS = env.int("DJANGO_SECURE_HSTS_SECONDS", default=2592000)  # 30 days
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool(
@@ -98,7 +97,10 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool(
 )
 SECURE_HSTS_PRELOAD = env.bool("DJANGO_SECURE_HSTS_PRELOAD", default=True)
 
+
+
 ROOT_URLCONF = "library.urls"
+
 
 TEMPLATES = [
     {
@@ -178,10 +180,9 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # remember me when log in
 ACCOUNT_SESSION_REMEMBER = True
 
-ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 
-ACCOUNT_AUTHENTICATION_METHOD = "email"  # new
-ACCOUNT_EMAIL_REQUIRED = True  # new
+ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_UNIQUE_EMAIL = True
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
