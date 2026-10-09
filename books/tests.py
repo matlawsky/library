@@ -8,6 +8,7 @@ from .models import Book, Author, Copy, Event
 from .forms import AddBookForm, CopyManagementForm
 from .services.catalog import create_book
 from .services.circulation import transition
+from .services.audit import issues
 from datetime import date
 from unittest.mock import patch
 
@@ -154,6 +155,14 @@ class TransitionValidationTests(LibraryCase):
         transition(self.copy.pk,self.staff,"return")
         with self.assertRaises(ValidationError): transition(self.copy.pk,self.staff,"return")
         self.assertEqual(Event.objects.count(),1)
+
+
+class AuditTests(LibraryCase):
+    def test_audit_does_not_repair_automatically(self):
+        Copy.objects.filter(pk=self.copy.pk).update(holder=self.reader)
+        before=list(Copy.objects.values())
+        self.assertTrue(list(issues()))
+        self.assertEqual(before,list(Copy.objects.values()))
 
     ### Views logged out users can access
     # Home
