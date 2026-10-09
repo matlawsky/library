@@ -33,6 +33,12 @@ class CatalogTests(LibraryCase):
         self.client.force_login(self.reader)
         self.assertIn(self.client.post(reverse("add_book"), {}).status_code, [302,403])
 
+class FreshPageTests(LibraryCase):
+    def test_changes_are_visible(self):
+        self.client.get(reverse("find_books"))
+        Book.objects.filter(pk=self.book.pk).update(title="Changed title")
+        self.assertContains(self.client.get(reverse("find_books")), "Changed title")
+
 class BookTests(TestCase):
     @classmethod
     def setUpTestData(cls):
