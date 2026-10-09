@@ -12,7 +12,7 @@ services:
     depends_on:
       - db
     environment:
-      - "DJANGO_SECRET_KEY=django-insecure-49mzdx6nsa9d*7ur3f^_0_-+1f+ir#*(%ud8@g@9ihj-n@5v&g"
+      - "DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY}"
       - "DJANGO_DEBUG=True"
       - "DJANGO_SECURE_SSL_REDIRECT=False"
       - "EMAIL_HOST_USER=test@gmail.com"
@@ -24,7 +24,7 @@ services:
       - "DJANGO_CSRF_COOKIE_SECURE=False"
 
   db:
-    image: postgres:13
+    image: postgres:16
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
