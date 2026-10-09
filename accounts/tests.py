@@ -1,7 +1,21 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+from django.urls import reverse
+from allauth.account.models import EmailAddress
 
+
+class EmailTests(TestCase):
+    def test_new_email_is_not_automatically_verified(self):
+        user = get_user_model().objects.create_user("reader","reader@example.com","Strong-pass-123")
+        EmailAddress.objects.create(user=user,email=user.email,primary=True,verified=True)
+        self.client.force_login(user)
+        self.client.post(reverse("account_email"),{"email":"new@example.com","action_add":""})
+        address = EmailAddress.objects.get(user=user,email="new@example.com")
+        self.assertFalse(address.verified)
+        user.refresh_from_db(); self.assertEqual(user.email,"reader@example.com")
 
 class AccountTests(TestCase):
     def test_signup_page(self):
