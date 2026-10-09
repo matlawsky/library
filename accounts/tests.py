@@ -1,6 +1,7 @@
-from django.test import TestCase
 from django.contrib.auth import get_user_model
-from django.urls import reverse, resolve
+from django.test import TestCase
+from django.urls import reverse
+
 
 class AccountTests(TestCase):
     def test_signup_page(self):
@@ -9,6 +10,20 @@ class AccountTests(TestCase):
         response = self.client.post(reverse("account_signup"), {"username":"newreader", "email":"newreader@example.com", "password1":"Very-strong-pass-841", "password2":"Very-strong-pass-841"})
         self.assertEqual(response.status_code,302)
         self.assertTrue(get_user_model().objects.filter(username="newreader").exists())
+
+
+class ProfileTests(TestCase):
+    def test_anonymous_redirect(self):
+        self.assertEqual(self.client.get(reverse("myaccount")).status_code,302)
+    def test_profile_cannot_elevate(self):
+        user = get_user_model().objects.create_user("reader","reader@example.com","testpass123")
+        self.client.force_login(user)
+        response = self.client.post(reverse("myaccount"),dict(username="renamed",first_name="A",last_name="B",is_staff=True,email="evil@example.com"))
+        self.assertRedirects(response,reverse("myaccount"))
+        user.refresh_from_db()
+        self.assertFalse(user.is_staff)
+        self.assertEqual(user.email,"reader@example.com")
+
 
 class CustomUserTest(TestCase):
     def test_create_user(self):
