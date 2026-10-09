@@ -13,24 +13,22 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from pathlib import Path
 from environs import Env
 
-
-env = Env()
-env.read_env()
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = Env()
+env.read_env(str(BASE_DIR / ".env"))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("DJANGO_SECRET_KEY")
+SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 
-ALLOWED_HOSTS = ["ancient-falls-22002.herokuapp.com", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 
@@ -54,10 +52,9 @@ INSTALLED_APPS = [
     # django allauth
     "allauth",
     "allauth.account",
-    # accounts app - custom user model
-    "accounts.apps.AccountsConfig",
-    # pages app - model for static pages
-    "books.apps.BooksConfig",
+    # accounts app and books
+    "accounts", 
+    "books"
 ]
 
 DEFAULT_FROM_EMAIL = "library.system.alexandria@gmail.com"
@@ -73,8 +70,6 @@ AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 )
-
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -124,9 +119,7 @@ WSGI_APPLICATION = "library.wsgi.application"
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 
-DATABASES = {
-    "default": env.dj_db_url("DATABASE_URL", default="postgres://postgres@db/postgres")
-}
+DATABASES = {"default": env.dj_db_url("DATABASE_URL")}
 
 
 # Password validation
@@ -134,20 +127,16 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-]
+        "NAME": "django.contrib.auth.password_validation." + name} for name in [
+        "UserAttributeSimilarityValidator",
+        "MinimumLengthValidator",
+        "CommonPasswordValidator",
+        "NumericPasswordValidator"
+        ]]
 
-
+LOGIN_URL = "account_login"
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "home"
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
@@ -178,7 +167,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # remember me when log in
 ACCOUNT_SESSION_REMEMBER = True
-
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 
 ACCOUNT_LOGIN_METHODS = {"email"}
@@ -186,6 +175,7 @@ ACCOUNT_UNIQUE_EMAIL = True
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
+EMAIL_TIMEOUT = 10
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
