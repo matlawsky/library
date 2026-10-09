@@ -1,5 +1,11 @@
-venv
-.vscode
 __pycache__/
-db.sqlite3
-docker-compose-prod.yml
+*.py[cod]
+.env
+.venv/
+venv/
+*.sqlite3
+staticfiles/
+.coverage
+htmlcov/
+playwright-report/
+test-results/

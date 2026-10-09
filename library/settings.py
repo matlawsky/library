@@ -57,7 +57,6 @@ INSTALLED_APPS = [
     # accounts app - custom user model
     "accounts.apps.AccountsConfig",
     # pages app - model for static pages
-    "pages.apps.PagesConfig",
     "books.apps.BooksConfig",
 ]
 

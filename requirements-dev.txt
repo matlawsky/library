@@ -1,0 +1,4 @@
+-r requirements.lock
+ruff==0.16.10
+coverage==7.16.2
+playwright==1.63.0
