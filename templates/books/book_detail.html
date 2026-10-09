@@ -60,9 +60,9 @@
         </table>
         {% if user.is_staff %}
         <br>
-        <button class="btn btn-warning" type="button">
-            <a href="{{ object.get_absolute_url_with_new_copy }}">Add copy</a>
-        </button>
+        <form method="post" action="{% url 'add_copy' object.pk %}">
+            {% csrf_token %}<button class="btn btn-warning" type="submit">Add copy</button>
+        </form>
         <br>
         {% endif %}
         {% endif %}

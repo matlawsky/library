@@ -86,10 +86,6 @@ class Book(models.Model):
     def get_absolute_url(self):
         return reverse_lazy("book_detail", args=[str(self.id)])
 
-    def get_absolute_url_with_new_copy(self):
-        self.add_new_copy()
-        return reverse_lazy("book_detail", args=[str(self.id)])
-
     def add_new_copy(self):
         Copy(state="New", book=self).save()
 

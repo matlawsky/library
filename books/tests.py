@@ -81,6 +81,24 @@ class BookTests(TestCase):
         )
         cls.book.authors.add(cls.author1, cls.author2)
 
+class CopyCreationTests(LibraryCase):
+    def test_get_never_creates(self):
+        self.client.force_login(self.staff)
+        before = Copy.objects.count()
+        for _ in range(2): self.client.get(self.book.get_absolute_url())
+        self.assertEqual(Copy.objects.count(),before)
+    def test_post_only_and_staff_only(self):
+        url = reverse("add_copy", args=[self.book.pk])
+        self.client.force_login(self.reader)
+        self.assertIn(self.client.post(url).status_code,[302,403])
+        self.client.force_login(self.staff)
+        self.assertEqual(self.client.get(url).status_code,405)
+        self.assertEqual(self.client.post(url).status_code,302)
+        self.assertEqual(Copy.objects.count(),2)
+    def test_csrf_required(self):
+        client = Client(enforce_csrf_checks=True); client.force_login(self.staff)
+        self.assertEqual(client.post(reverse("add_copy",args=[self.book.pk])).status_code,403)
+    
     ### Views logged out users can access
     # Home
     # Find books

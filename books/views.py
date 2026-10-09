@@ -8,6 +8,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.views.generic.edit import FormMixin
 from .models import Book, Copy, Author, Event
+from django.shortcuts import get_object_or_404, redirect
+from django.views.decorators.http import require_POST
+
 
 # main page view
 class HomePageView(ListView):
@@ -152,3 +155,10 @@ class AllEventsView(LoginRequiredMixin, ListView, FormMixin):
     model = Event
     template_name = "books/books_list.html"
     login_url = "account_login"
+
+@staff_member_required(login_url="account_login")
+@require_POST
+def add_copy(request, pk):
+    book = get_object_or_404(Book, pk=pk)
+    book.add_new_copy()
+    return redirect(book)

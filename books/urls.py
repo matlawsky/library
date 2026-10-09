@@ -13,7 +13,6 @@ from .views import (
     AllEventsView,
 )
 
-
 urlpatterns = [
     path("", HomePageView.as_view(), name="home"),
     path("find/", FindBooksView.as_view(), name="find_books"),
@@ -30,3 +29,6 @@ urlpatterns = [
     ),
     path("events/", AllEventsView.as_view(), name="events"),
 ]
+
+from .views import add_copy
+urlpatterns += [path("<uuid:pk>/copies/add/", add_copy, name="add_copy")]
