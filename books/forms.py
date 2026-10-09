@@ -1,5 +1,5 @@
 from django import forms
-from .models import Book, Copy
+from .models import Author, Book, Copy
 
 
 COPY_MANAGEMENT_CHOICES = [
@@ -14,9 +14,19 @@ class DateInput(forms.DateInput):
 
 
 class AddBookForm(forms.ModelForm):
-    number_of_copies = forms.IntegerField(initial=0)
+    number_of_copies = forms.IntegerField(initial=0, min_value=0, max_value=100)
+    page_count = forms.IntegerField(min_value=1)
     authors = forms.CharField()
     image_url = forms.URLField(widget=forms.HiddenInput(), required=False)
+
+    def clean_authors(self):
+        value = self.cleaned_data["authors"]
+        if not any(n.strip() for n in value.split(";")):
+            raise forms.ValidationError("Provide at least one author.")
+        limit = Author._meta.get_field("name").max_length
+        if any(len(name.strip()) > limit for name in value.split(";")):
+            raise forms.ValidationError(f"Each author must have at most {limit} characters.")
+        return value
 
     class Meta:
         model = Book

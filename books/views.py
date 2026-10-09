@@ -86,17 +86,9 @@ class CreateBookView(LoginRequiredMixin, CreateView):
         return success_url
 
     def form_valid(self, form):
-        Book = form.save()
-        names = str(form.cleaned_data["authors"]).split(";")
-        for name in names:
-            author = Author.objects.get_or_create(name=name)
-            Book.authors.add(author[0])
-
-        number_of_copies = form.cleaned_data["number_of_copies"]
-        while number_of_copies != 0:
-            Book.add_new_copy()
-            number_of_copies -= 1
-        return super().form_valid(form)
+        from .services.catalog import create_book
+        self.object = create_book(form)
+        return redirect(self.object)
 
 
 @method_decorator(staff_member_required, name="dispatch")

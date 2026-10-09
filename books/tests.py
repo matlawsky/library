@@ -4,8 +4,10 @@ from django.urls import resolve, reverse
 from django.contrib.auth import get_user_model
 from .views import HomePageView
 from .models import Book, Author, Copy
+from .forms import AddBookForm
+from .services.catalog import create_book
 from datetime import date
-
+from unittest.mock import patch
 # TODO add tests coverage for additional classes: Author and Copy
 
 class LibraryCase(TestCase):
@@ -98,7 +100,20 @@ class CopyCreationTests(LibraryCase):
     def test_csrf_required(self):
         client = Client(enforce_csrf_checks=True); client.force_login(self.staff)
         self.assertEqual(client.post(reverse("add_copy",args=[self.book.pk])).status_code,403)
-    
+
+
+class AddBookTests(LibraryCase):
+    def data(self, count):
+        return dict(title="New title", subtitle="Subtitle", description="Text", published_date="2020-01-01", page_count=100, authors=" Alice ; ; Bob ", number_of_copies=count)
+    def test_bounds(self):
+        for count in [-1,101]: self.assertFalse(AddBookForm(self.data(count)).is_valid())
+        for count in [0,1,100]: self.assertTrue(AddBookForm(self.data(count)).is_valid())
+    def test_atomic_creation(self):
+        form = AddBookForm(self.data(2)); self.assertTrue(form.is_valid())
+        with patch("books.services.catalog.Copy.objects.bulk_create", side_effect=RuntimeError("failure")):
+            with self.assertRaises(RuntimeError): create_book(form)
+        self.assertFalse(Book.objects.filter(title="New title").exists())
+
     ### Views logged out users can access
     # Home
     # Find books
