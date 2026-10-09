@@ -2,12 +2,15 @@
 from django.test import TestCase, Client
 from django.urls import resolve, reverse
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError, PermissionDenied
 from .views import HomePageView
-from .models import Book, Author, Copy
+from .models import Book, Author, Copy, Event
 from .forms import AddBookForm
 from .services.catalog import create_book
+from .services.circulation import transition
 from datetime import date
 from unittest.mock import patch
+
 # TODO add tests coverage for additional classes: Author and Copy
 
 class LibraryCase(TestCase):
@@ -100,6 +103,31 @@ class CopyCreationTests(LibraryCase):
     def test_csrf_required(self):
         client = Client(enforce_csrf_checks=True); client.force_login(self.staff)
         self.assertEqual(client.post(reverse("add_copy",args=[self.book.pk])).status_code,403)
+
+
+class CirculationTests(LibraryCase):
+    def test_reader_borrows_and_different_staff_receives(self):
+        transition(self.copy.pk,self.reader,"reserve")
+        transition(self.copy.pk,self.staff,"borrow")
+        loan = Event.objects.get(borrowed_copy=self.copy)
+        self.assertEqual(loan.borrower,self.reader)
+        transition(self.copy.pk,self.staff2,"return")
+        loan.refresh_from_db(); self.copy.refresh_from_db()
+        self.assertEqual(loan.received_by,self.staff2)
+        self.assertIsNone(self.copy.holder_id)
+    def test_staff_cancels_but_other_reader_cannot(self):
+        transition(self.copy.pk,self.reader,"reserve")
+        with self.assertRaises(PermissionDenied): transition(self.copy.pk,self.other,"cancel")
+        transition(self.copy.pk,self.staff,"cancel")
+        self.copy.refresh_from_db(); self.assertIsNone(self.copy.reserved_for_id)
+    def test_reader_cannot_issue(self):
+        transition(self.copy.pk,self.reader,"reserve")
+        with self.assertRaises(PermissionDenied): transition(self.copy.pk,self.reader,"borrow")
+    def test_event_failure_rolls_back(self):
+        transition(self.copy.pk,self.reader,"reserve")
+        with patch("books.services.circulation.Event.objects.create",side_effect=RuntimeError("fail")):
+            with self.assertRaises(RuntimeError): transition(self.copy.pk,self.staff,"borrow")
+        self.copy.refresh_from_db(); self.assertEqual(self.copy.reserved_for_id,self.reader.pk)
 
 
 class AddBookTests(LibraryCase):

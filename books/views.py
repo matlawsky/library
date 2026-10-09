@@ -4,12 +4,14 @@ from .forms import AddBookForm, CopyReservationForm, CopyManagementForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.views.generic.edit import FormMixin
-from .models import Book, Copy, Author, Event
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect
-from django.views.decorators.http import require_POST
+from .models import Book, Copy, Author, Event
+from .services.circulation import transition
 
 
 # main page view
@@ -100,14 +102,12 @@ class CopyManagementView(LoginRequiredMixin, UpdateView):
     login_url = "account_login"
 
     def form_valid(self, form):
-        action = form.cleaned_data.get("book_copy_decision")
-        if "borrow" == action:
-            self.object.borrow_copy(self.request.user)
-        elif "return" == action:
-            self.object.return_copy(self.request.user)
-        elif "cancel" == action:
-            self.object.cancel_reservation(self.request.user)
-        return super().form_valid(form)
+        try:
+            self.object = transition(self.object.pk, self.request.user, form.cleaned_data["book_copy_decision"], form.cleaned_data["state"])
+        except ValidationError as exc:
+            form.add_error(None, exc)
+            return self.form_invalid(form)
+        return redirect(self.object)
 
 
 @method_decorator(login_required, name="dispatch")
@@ -118,12 +118,13 @@ class CopyReservationView(LoginRequiredMixin, UpdateView):
     login_url = "account_login"
 
     def form_valid(self, form):
-        if "make" in self.request.POST:
-            self.object.reserve_copy(self.request.user)
-        elif "cancel" in self.request.POST:
-            self.object.cancel_reservation(self.request.user)
-
-        return super().form_valid(form)
+        action = "reserve" if "make" in self.request.POST else "cancel" if "cancel" in self.request.POST else "unknown"
+        try:
+            self.object = transition(self.object.pk, self.request.user, action)
+        except ValidationError as exc:
+            form.add_error(None, exc)
+            return self.form_invalid(form)
+        return redirect(self.object)
 
 
 @method_decorator(login_required, name="dispatch")

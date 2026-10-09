@@ -186,6 +186,8 @@ class Event(models.Model):
         blank=True,
         related_name="borrowed_copy",
     )
+    issued_by = models.ForeignKey(am.CustomUser, null=True, blank=True, on_delete=models.SET_NULL, related_name="issued_loans")
+    received_by = models.ForeignKey(am.CustomUser, null=True, blank=True, on_delete=models.SET_NULL, related_name="received_loans")
     borrow_date = models.DateField(auto_now_add=True)
     return_date = models.DateField(null=True)
 
