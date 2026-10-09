@@ -1,21 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
-from django.contrib.auth import get_user_model
-from django.test import TestCase
-from django.urls import reverse
 from allauth.account.models import EmailAddress
+from unittest.mock import patch
 
-
-class EmailTests(TestCase):
-    def test_new_email_is_not_automatically_verified(self):
-        user = get_user_model().objects.create_user("reader","reader@example.com","Strong-pass-123")
-        EmailAddress.objects.create(user=user,email=user.email,primary=True,verified=True)
-        self.client.force_login(user)
-        self.client.post(reverse("account_email"),{"email":"new@example.com","action_add":""})
-        address = EmailAddress.objects.get(user=user,email="new@example.com")
-        self.assertFalse(address.verified)
-        user.refresh_from_db(); self.assertEqual(user.email,"reader@example.com")
 
 class AccountTests(TestCase):
     def test_signup_page(self):
@@ -37,6 +25,26 @@ class ProfileTests(TestCase):
         user.refresh_from_db()
         self.assertFalse(user.is_staff)
         self.assertEqual(user.email,"reader@example.com")
+
+
+class EmailTests(TestCase):
+    def test_new_email_is_not_automatically_verified(self):
+        user = get_user_model().objects.create_user("reader","reader@example.com","Strong-pass-123")
+        EmailAddress.objects.create(user=user,email=user.email,primary=True,verified=True)
+        self.client.force_login(user)
+        self.client.post(reverse("account_email"),{"email":"new@example.com","action_add":""})
+        address = EmailAddress.objects.get(user=user,email="new@example.com")
+        self.assertFalse(address.verified)
+        user.refresh_from_db(); self.assertEqual(user.email,"reader@example.com")
+
+
+class HealthTests(TestCase):
+    def test_ready(self): self.assertEqual(self.client.get(reverse("health_ready")).status_code,200)
+    def test_database_failure_is_503(self):
+        with patch("library.health.connection.cursor",side_effect=RuntimeError("private error")):
+            response=self.client.get(reverse("health_ready"))
+        self.assertEqual(response.status_code,503)
+        self.assertNotContains(response,"private error",status_code=503)
 
 
 class CustomUserTest(TestCase):

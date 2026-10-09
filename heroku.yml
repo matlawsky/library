@@ -1,12 +1,10 @@
-setup:
-  addons:
-  - plan: heroku-postgresql
+# Optional legacy hosting recipe; see docs/operations.md for the tested target.
 build:
   docker:
     web: Dockerfile
 release:
   image: web
   command:
-  - python manage.py collectstatic --noinput
+    - python manage.py migrate --noinput
 run:
-  web: gunicorn library.wsgi
+  web: gunicorn library.wsgi:application --bind 0.0.0.0:$PORT

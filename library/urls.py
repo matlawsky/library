@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from accounts.views import MyAccountView
 from . import settings
+from .health import live, ready
 
 urlpatterns = [
     # django admin
@@ -27,6 +28,8 @@ urlpatterns = [
     # static pages
     # path("", include("pages.urls")),
     path("", include("books.urls")),
+    path("health/live/",live,name="health_live"),
+    path("health/ready/",ready,name="health_ready")
 ]
 
 if settings.DEBUG:  # new
