@@ -1,18 +1,17 @@
 from django.urls import reverse_lazy
 from django.db.models import Q
-from .forms import AddBookForm, CopyReservationForm, CopyManagementForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_POST
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.views.generic.edit import FormMixin
+from django.views.decorators.http import require_POST
 from django.core.exceptions import ValidationError
-from django.shortcuts import get_object_or_404, redirect
 from .models import Book, Copy, Author, Event
 from .services.circulation import transition
-
+from .forms import AddBookForm, CopyReservationForm, CopyManagementForm
+from django.shortcuts import get_object_or_404, redirect
 
 # main page view
 class HomePageView(ListView):
@@ -144,10 +143,14 @@ class MyBooksListView(LoginRequiredMixin, ListView):
 
 @method_decorator(staff_member_required, name="dispatch")
 @method_decorator(login_required, name="dispatch")
-class AllEventsView(LoginRequiredMixin, ListView, FormMixin):
+class AllEventsView(LoginRequiredMixin, ListView):
     model = Event
-    template_name = "books/books_list.html"
+    template_name = "books/events_list.html"
+    context_object_name = "loans"
+    paginate_by = 25
+    queryset = Event.objects.select_related("borrower", "borrowed_copy__book", "issued_by", "received_by").order_by("-borrow_date", "-pk")
     login_url = "account_login"
+
 
 @staff_member_required(login_url="account_login")
 @require_POST

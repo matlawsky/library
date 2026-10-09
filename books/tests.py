@@ -12,7 +12,6 @@ from .services.circulation import transition
 from .services.audit import issues
 from datetime import date
 from unittest.mock import patch
-
 # TODO add tests coverage for additional classes: Author and Copy
 
 class LibraryCase(TestCase):
@@ -171,6 +170,15 @@ class ConstraintTests(LibraryCase):
         Event.objects.create(borrowed_copy=self.copy,borrower=self.reader)
         with self.assertRaises(IntegrityError), transaction.atomic():
             Event.objects.create(borrowed_copy=self.copy,borrower=self.other)
+
+
+class HistoryTests(LibraryCase):
+    def test_staff_history(self):
+        self.client.force_login(self.staff)
+        self.assertContains(self.client.get(reverse("events")),"Loan history")
+    def test_reader_denied(self):
+        self.client.force_login(self.reader)
+        self.assertIn(self.client.get(reverse("events")).status_code,[302,403])
 
     ### Views logged out users can access
     # Home
