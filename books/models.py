@@ -106,7 +106,10 @@ class Copy(models.Model):
         blank=True,
         related_name="reserved_for",
     )
-    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.PROTECT)
+
+    class Meta:
+        constraints = [models.CheckConstraint(check=models.Q(holder__isnull=True) | models.Q(reserved_for__isnull=True), name="copy_not_both_borrowed_reserved")]
 
     def get_absolute_url(self):
         return reverse("copy_detail", args=[str(self.pk)])
@@ -182,7 +185,7 @@ class Event(models.Model):
     borrowed_copy = models.ForeignKey(
         Copy,
         null=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         blank=True,
         related_name="borrowed_copy",
     )
@@ -190,6 +193,12 @@ class Event(models.Model):
     received_by = models.ForeignKey(am.CustomUser, null=True, blank=True, on_delete=models.SET_NULL, related_name="received_loans")
     borrow_date = models.DateField(auto_now_add=True)
     return_date = models.DateField(null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["borrowed_copy"], condition=models.Q(return_date__isnull=True, borrowed_copy__isnull=False), name="one_open_loan_per_copy"),
+            models.CheckConstraint(check=models.Q(return_date__isnull=True) | models.Q(return_date__gte=models.F("borrow_date")), name="loan_dates_ordered"),
+        ]
 
     def user(self) -> str:
         return str(self.borrower)

@@ -1,6 +1,7 @@
 # books/tests.py
 from django.test import TestCase, Client
 from django.urls import resolve, reverse
+from django.db import IntegrityError, transaction
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError, PermissionDenied
 from .views import HomePageView
@@ -163,6 +164,13 @@ class AuditTests(LibraryCase):
         before=list(Copy.objects.values())
         self.assertTrue(list(issues()))
         self.assertEqual(before,list(Copy.objects.values()))
+
+
+class ConstraintTests(LibraryCase):
+    def test_duplicate_open_event_is_rejected(self):
+        Event.objects.create(borrowed_copy=self.copy,borrower=self.reader)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Event.objects.create(borrowed_copy=self.copy,borrower=self.other)
 
     ### Views logged out users can access
     # Home
