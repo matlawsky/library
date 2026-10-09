@@ -39,9 +39,7 @@ class Book(models.Model):
     description = models.CharField(max_length=254)
     published_date = models.DateField()
     page_count = models.IntegerField()
-    image_url = models.URLField(
-        default=f"https://picsum.photos/seed/{time.time() % 12345}/200/300"
-    )
+    image_url = models.URLField(blank=True, default="")
 
     def __str__(self) -> str:
         return self.title
@@ -79,7 +77,7 @@ class Book(models.Model):
             return text
 
     def get_first_author(self):
-        n = self.get_authors_as_string_in_list()[0]
+        n = next(iter(self.get_authors_as_string_in_list()), "Unknown")
         return n
 
     # search for space separated strings in title, subtitle and author fields
@@ -115,7 +113,7 @@ class Copy(models.Model):
         return reverse("copy_detail", args=[str(self.pk)])
 
     def get_book_title(self):
-        return self.book.get_title
+        return self.book.get_title()
 
     def get_holder_str(self):
         return str(self.holder)

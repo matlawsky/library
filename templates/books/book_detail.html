@@ -23,7 +23,7 @@
 <main>
     <div class="container px-4 py-5">
         <h2 class="pb-2 border-bottom">{{ object.title }}</h2>
-        <img src="{{ object.image_url }}">
+        {% if object.image_url %}<img src="{{ object.image_url }}" alt="Cover of {{ object.title }}" width="200">{% else %}<img src="{% static 'images/book-placeholder.svg' %}" alt="No cover available" width="200">{% endif %}
         <p>Subtitle: {{ object.subtitle }}</p>
         <p>Authors:
             {% for author in object.get_authors_list %}
