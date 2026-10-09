@@ -1,13 +1,37 @@
 # books/tests.py
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.urls import resolve, reverse
 from django.contrib.auth import get_user_model
 from .views import HomePageView
 from .models import Book, Author, Copy
-import datetime
+from datetime import date
 
 # TODO add tests coverage for additional classes: Author and Copy
 
+class LibraryCase(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        User = get_user_model()
+        cls.reader = User.objects.create_user("reader", "reader@example.com", "Password123$")
+        cls.other = User.objects.create_user("other", "other@example.com", "Password123$")
+        cls.staff = User.objects.create_user("staff", "staff@example.com", "Password123$", is_staff=True)
+        cls.staff2 = User.objects.create_user("staff2", "staff2@example.com", "Password123$", is_staff=True)
+        cls.book = Book.objects.create(title="Test book", subtitle="Example", description="Text", published_date=date(2020,1,1), page_count=100)
+        cls.copy = Copy.objects.create(book=cls.book, state="New")
+
+class CatalogTests(LibraryCase):
+    def test_public_catalog(self):
+        for name in ["home", "find_books"]:
+            self.assertContains(self.client.get(reverse(name)), "Test book")
+    def test_detail_requires_login(self):
+        self.assertEqual(self.client.get(self.book.get_absolute_url()).status_code, 302)
+    def test_reader_and_staff_detail(self):
+        for user in [self.reader, self.staff]:
+            self.client.force_login(user)
+            self.assertTemplateUsed(self.client.get(self.book.get_absolute_url()), "books/book_detail.html")
+    def test_reader_cannot_add_book(self):
+        self.client.force_login(self.reader)
+        self.assertIn(self.client.post(reverse("add_book"), {}).status_code, [302,403])
 
 class BookTests(TestCase):
     @classmethod
@@ -42,7 +66,7 @@ class BookTests(TestCase):
             title="Magic Mike",
             subtitle="Wizard's wand",
             description="long long long ago",
-            published_date=datetime.date.today(),
+            published_date=date.today(),
             page_count=100,
             image_url="https://picsum.photos/seed/picsum/200/329",
         )

@@ -2,6 +2,13 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse, resolve
 
+class AccountTests(TestCase):
+    def test_signup_page(self):
+        self.assertContains(self.client.get(reverse("account_signup")), "Sign up")
+    def test_signup_post(self):
+        response = self.client.post(reverse("account_signup"), {"username":"newreader", "email":"newreader@example.com", "password1":"Very-strong-pass-841", "password2":"Very-strong-pass-841"})
+        self.assertEqual(response.status_code,302)
+        self.assertTrue(get_user_model().objects.filter(username="newreader").exists())
 
 class CustomUserTest(TestCase):
     def test_create_user(self):
