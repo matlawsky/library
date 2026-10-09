@@ -11,7 +11,7 @@ def require_staff(actor):
 def transition(copy_id, actor, action, state=None):
     if not actor.is_authenticated or not actor.is_active:
         raise PermissionDenied
-    copy = Copy.objects.get(pk=copy_id)
+    copy = Copy.objects.select_for_update().get(pk=copy_id)
     if action in {"borrow", "return"} or state is not None:
         require_staff(actor)
     if action == "reserve":

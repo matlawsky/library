@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError, PermissionDenied
 from .views import HomePageView
 from .models import Book, Author, Copy, Event
-from .forms import AddBookForm
+from .forms import AddBookForm, CopyManagementForm
 from .services.catalog import create_book
 from .services.circulation import transition
 from datetime import date
@@ -141,6 +141,19 @@ class AddBookTests(LibraryCase):
         with patch("books.services.catalog.Copy.objects.bulk_create", side_effect=RuntimeError("failure")):
             with self.assertRaises(RuntimeError): create_book(form)
         self.assertFalse(Book.objects.filter(title="New title").exists())
+
+
+class TransitionValidationTests(LibraryCase):
+    def test_unknown_action(self):
+        self.assertFalse(CopyManagementForm({"state":"New","book_copy_decision":"arbitrary"},instance=self.copy).is_valid())
+    def test_stale_reservation_is_rejected(self):
+        transition(self.copy.pk,self.reader,"reserve")
+        with self.assertRaises(ValidationError): transition(self.copy.pk,self.other,"reserve")
+    def test_duplicate_return_is_rejected(self):
+        transition(self.copy.pk,self.reader,"reserve"); transition(self.copy.pk,self.staff,"borrow")
+        transition(self.copy.pk,self.staff,"return")
+        with self.assertRaises(ValidationError): transition(self.copy.pk,self.staff,"return")
+        self.assertEqual(Event.objects.count(),1)
 
     ### Views logged out users can access
     # Home

@@ -8,6 +8,7 @@
             <div class="container-fluid py-5">
                 <h1 class="display-5 fw-bold">Book management</h1>
                 <form action="." method="POST"> {% csrf_token %}
+                    {{ form.non_field_errors }}
                     {{ form.book_copy_decision | as_crispy_field }}
                     {{ form.state | as_crispy_field }}
                     <input class="w-100 btn btn-lg btn-success" type="submit" value="Submit"></input>

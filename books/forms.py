@@ -49,12 +49,13 @@ class CopyReservationForm(forms.ModelForm):
 
 
 class CopyManagementForm(forms.ModelForm):
-    book_copy_decision = forms.CharField(
+    book_copy_decision = forms.ChoiceField(
+        choices=COPY_MANAGEMENT_CHOICES,
         label="What would you like to do with that reserved book?",
         widget=forms.RadioSelect(choices=COPY_MANAGEMENT_CHOICES),
     )
     state = forms.CharField(
-        max_length=254,
+        max_length=250,
         widget=forms.Textarea(attrs={"rows": 7, "cols": 40}),
     )
 
