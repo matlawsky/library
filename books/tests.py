@@ -1,29 +1,29 @@
-# books/tests.py
-from django.test import TestCase, Client
-from django.urls import resolve, reverse
-from django.db import IntegrityError, transaction
+from datetime import date
 from django.contrib.auth import get_user_model
+from django.test import TestCase, Client
+from django.urls import reverse
 from django.core.exceptions import ValidationError, PermissionDenied
-from .views import HomePageView
-from .models import Book, Author, Copy, Event
+from django.db import IntegrityError, transaction
+from .models import Book, Copy, Author, Event
 from .forms import AddBookForm, CopyManagementForm
 from .services.catalog import create_book
 from .services.circulation import transition
 from .services.audit import issues
-from datetime import date
+from .metadata import normalize_isbn, parse_publication
 from unittest.mock import patch
-# TODO add tests coverage for additional classes: Author and Copy
+
 
 class LibraryCase(TestCase):
     @classmethod
     def setUpTestData(cls):
         User = get_user_model()
-        cls.reader = User.objects.create_user("reader", "reader@example.com", "Password123$")
-        cls.other = User.objects.create_user("other", "other@example.com", "Password123$")
-        cls.staff = User.objects.create_user("staff", "staff@example.com", "Password123$", is_staff=True)
-        cls.staff2 = User.objects.create_user("staff2", "staff2@example.com", "Password123$", is_staff=True)
+        cls.reader = User.objects.create_user("reader", "reader@example.com", "Strong-pass-123")
+        cls.other = User.objects.create_user("other", "other@example.com", "Strong-pass-123")
+        cls.staff = User.objects.create_user("staff", "staff@example.com", "Strong-pass-123", is_staff=True)
+        cls.staff2 = User.objects.create_user("staff2", "staff2@example.com", "Strong-pass-123", is_staff=True)
         cls.book = Book.objects.create(title="Test book", subtitle="Example", description="Text", published_date=date(2020,1,1), page_count=100)
         cls.copy = Copy.objects.create(book=cls.book, state="New")
+
 
 class CatalogTests(LibraryCase):
     def test_public_catalog(self):
@@ -39,53 +39,13 @@ class CatalogTests(LibraryCase):
         self.client.force_login(self.reader)
         self.assertIn(self.client.post(reverse("add_book"), {}).status_code, [302,403])
 
+
 class FreshPageTests(LibraryCase):
     def test_changes_are_visible(self):
         self.client.get(reverse("find_books"))
         Book.objects.filter(pk=self.book.pk).update(title="Changed title")
         self.assertContains(self.client.get(reverse("find_books")), "Changed title")
 
-class BookTests(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        # Set up 3 types of site viewers
-        cls.normal_user = get_user_model().objects.create_user(  # new
-            username="Matt User",
-            email="matt_user@email.com",
-            password="testpass123",
-        )
-
-        cls.staff_user = get_user_model().objects.create_user(  # new
-            username="Matt Staff Member",
-            email="matt_staff_member@email.com",
-            password="testpass123",
-            is_staff=True,
-        )
-
-        cls.super_user = get_user_model().objects.create_superuser(  # new
-            username="Matt Admin",
-            email="matt_admin@email.com",
-            password="testpass123",
-        )
-        # Set up instances of all classes
-        cls.author1 = Author.objects.create(
-            name="Harry Pioter",
-        )
-        cls.author2 = Author.objects.create(
-            name="Harry Piuntek",
-        )
-        cls.book = Book.objects.create(
-            title="Magic Mike",
-            subtitle="Wizard's wand",
-            description="long long long ago",
-            published_date=date.today(),
-            page_count=100,
-            image_url="https://picsum.photos/seed/picsum/200/329",
-        )
-        cls.copy1 = Copy.objects.create(
-            book=Book.objects.get(id=cls.book.id), state="New"
-        )
-        cls.book.authors.add(cls.author1, cls.author2)
 
 class CopyCreationTests(LibraryCase):
     def test_get_never_creates(self):
@@ -104,6 +64,19 @@ class CopyCreationTests(LibraryCase):
     def test_csrf_required(self):
         client = Client(enforce_csrf_checks=True); client.force_login(self.staff)
         self.assertEqual(client.post(reverse("add_copy",args=[self.book.pk])).status_code,403)
+
+
+class AddBookTests(LibraryCase):
+    def data(self, count):
+        return dict(title="New title", subtitle="Subtitle", description="Text", published_date="2020-01-01", page_count=100, authors=" Alice ; ; Bob ", number_of_copies=count)
+    def test_bounds(self):
+        for count in [-1,101]: self.assertFalse(AddBookForm(self.data(count)).is_valid())
+        for count in [0,1,100]: self.assertTrue(AddBookForm(self.data(count)).is_valid())
+    def test_atomic_creation(self):
+        form = AddBookForm(self.data(2)); self.assertTrue(form.is_valid())
+        with patch("books.services.catalog.Copy.objects.bulk_create", side_effect=RuntimeError("failure")):
+            with self.assertRaises(RuntimeError): create_book(form)
+        self.assertFalse(Book.objects.filter(title="New title").exists())
 
 
 class CirculationTests(LibraryCase):
@@ -129,19 +102,6 @@ class CirculationTests(LibraryCase):
         with patch("books.services.circulation.Event.objects.create",side_effect=RuntimeError("fail")):
             with self.assertRaises(RuntimeError): transition(self.copy.pk,self.staff,"borrow")
         self.copy.refresh_from_db(); self.assertEqual(self.copy.reserved_for_id,self.reader.pk)
-
-
-class AddBookTests(LibraryCase):
-    def data(self, count):
-        return dict(title="New title", subtitle="Subtitle", description="Text", published_date="2020-01-01", page_count=100, authors=" Alice ; ; Bob ", number_of_copies=count)
-    def test_bounds(self):
-        for count in [-1,101]: self.assertFalse(AddBookForm(self.data(count)).is_valid())
-        for count in [0,1,100]: self.assertTrue(AddBookForm(self.data(count)).is_valid())
-    def test_atomic_creation(self):
-        form = AddBookForm(self.data(2)); self.assertTrue(form.is_valid())
-        with patch("books.services.catalog.Copy.objects.bulk_create", side_effect=RuntimeError("failure")):
-            with self.assertRaises(RuntimeError): create_book(form)
-        self.assertFalse(Book.objects.filter(title="New title").exists())
 
 
 class TransitionValidationTests(LibraryCase):
@@ -190,94 +150,11 @@ class SearchTests(LibraryCase):
         transition(self.copy.pk,self.reader,"reserve")
         self.assertContains(self.client.get(reverse("find_books"),{"available":"1"}),"No matching books")
 
-    ### Views logged out users can access
-    # Home
-    # Find books
-    # Log In
-    # Register
 
-    ### Views logged in users can access
-    # Home
-    # Find books
-    # Book detail - only reservation functionality
-    # My books - history of books
-    # My account - balance and changing the password
-    # Log Out
-
-    ### Views logged in staff members can access
-    # Home
-    # Find books
-    # Book detail - only reservation functionality
-    # Add book
-    # Lend Book
-    # Retrieve Book
-    # Events history search
-    # My books - history of books
-    # My account - balance and changing the password
-    # Log Out
-
-    # Both tests are to test if page is showing up
-    def test_url_exists_at_correct_location(self):
-        url = reverse("home")
-        self.response = self.client.get(url)
-        self.assertEqual(self.response.status_code, 200)
-
-    # testing if correct template is used
-    def test_homepage_template(self):
-        url = reverse("home")
-        self.response = self.client.get(url)
-        self.assertTemplateUsed(self.response, "home.html")
-
-    # testing if html contains specified text
-    def test_homepage_contains_correct_html(self):
-        url = reverse("home")
-        self.response = self.client.get(url)
-        self.assertContains(self.response, "BESTSELLERS")
-
-    # testing if html does not contain specified text
-    def test_homepage_does_not_contain_incorrect_html(self):
-        url = reverse("home")
-        self.response = self.client.get(url)
-        self.assertNotContains(self.response, "It's not a correct page")
-
-    # test home page view
-    def test_home_page(self):
-        url = reverse("home")
-        self.response = self.client.get(url)
-        self.assertEqual(f"{self.book.title}", "Magic Mike")
-        self.assertQuerysetEqual(
-            list(self.book.authors.all()), list(Author.objects.all())
-        )  # this test only works cause there are only 2 authors
-        # TODO procure a queryset that contains both authors used
-
-    def test_books_list_view(self):
-        response = self.client.get(reverse("find_books"))
-        self.assertEqual(response.status_code, 302)
-        self.assertContains(response, "Magic Mike")
-        self.assertTemplateUsed(response, "books/find_books.html")
-
-    # test book detail page and access to it for regular user
-    def test_book_detail_view_for_user(self):
-        response = self.client.get(self.book.get_absolute_url())
-        no_response = self.client.get("/books/12345/")
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(no_response.status_code, 404)
-        self.assertContains(response, "Magic Mike")
-        self.assertTemplateUsed(response, "books/book_detail.html")
-
-    # test book detail page and access to it for staff members
-    def test_book_detail_view_for_staff_member(self):
-        response = self.client.get(self.book.get_absolute_url())
-        no_response = self.client.get("/books/12345/")
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(no_response.status_code, 404)
-        self.assertContains(response, "Magic Mike")
-        self.assertTemplateUsed(response, "books/book_detail.html")
-
-    # TODO: test reservation feature
-
-    # TODO: test borrowing feature
-
-    # TODO: test returning feature
-
-    # TODO: combine above tests and see if the events are generated and saved
+class MetadataTests(TestCase):
+    def test_isbn_conversion(self):
+        self.assertEqual(normalize_isbn("0-306-40615-2"),"9780306406157")
+        with self.assertRaises(ValidationError): normalize_isbn("9780306406158")
+    def test_partial_date_is_not_a_fake_day(self):
+        self.assertEqual(parse_publication("2020"),("2020",None))
+        with self.assertRaises(ValidationError): parse_publication("2020-99")

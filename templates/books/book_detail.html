@@ -31,7 +31,7 @@
             {% endfor %}
         </p>
         <p>Description: {{ object.description }}</p>
-        <p>Published on: {{ object.published_date }}</p>
+        <p>Published on: {{ object.publication_display }}</p>
         <p>Page Count: {{object.page_count}} </p>
         {% if user.is_authenticated %}
         <h2>Copies</h2>

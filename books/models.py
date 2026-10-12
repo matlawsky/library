@@ -3,6 +3,7 @@ from accounts import models as am
 from django.urls import reverse, reverse_lazy
 from django.db.models.signals import post_save
 import uuid
+from .metadata import normalize_isbn, validate_isbn
 import time
 from datetime import datetime
 
@@ -35,14 +36,24 @@ class Book(models.Model):
 
     title = models.CharField(max_length=250)
     authors = models.ManyToManyField(Author)
-    subtitle = models.CharField(max_length=250)
-    description = models.CharField(max_length=254)
-    published_date = models.DateField()
-    page_count = models.IntegerField()
+    isbn = models.CharField(max_length=13, null=True, blank=True, unique=True, validators=[validate_isbn])
+    publication_text = models.CharField(max_length=10, blank=True, default="")
+    subtitle = models.CharField(max_length=250, blank=True)
+    description = models.TextField(blank=True)
+    published_date = models.DateField(null=True, blank=True)
+    page_count = models.PositiveIntegerField(null=True, blank=True)
     image_url = models.URLField(blank=True, default="")
 
     def __str__(self) -> str:
         return self.title
+
+    def clean(self):
+        super().clean()
+        self.isbn = normalize_isbn(self.isbn)
+
+    @property
+    def publication_display(self):
+        return self.publication_text or (self.published_date.isoformat() if self.published_date else "Unknown")
 
     def get_title(self):
         return self.title
@@ -133,43 +144,6 @@ class Copy(models.Model):
         else:
             return False
 
-    def reserve_copy(self, usr: am.CustomUser):
-        if self.is_not_reserved() == True and self.is_not_borrowed() == True:
-            self.reserved_for = usr
-        else:
-            pass
-
-    def cancel_reservation(self, usr: am.CustomUser):
-        if self.is_not_reserved() == False:
-            if self.reserved_for == usr:
-                self.reserved_for = None
-            else:
-                pass
-        else:
-            pass
-
-    def borrow_copy(self, usr: am.CustomUser):
-        if self.is_not_reserved() == False and self.is_not_borrowed() == True:
-            Event.objects.create(
-                borrower=usr, borrowed_copy=self, borrow_date=datetime.now()
-            )
-            self.reserved_for = None
-            self.holder = usr
-        else:
-            pass
-
-    def return_copy(self, usr: am.CustomUser):
-        if self.is_not_borrowed() == False and self.is_not_reserved() == True:
-            e = Event.objects.get(
-                borrowed_copy__exact=self,
-                borrower__exact=usr,
-                return_date__exact=None,
-            )
-            e.return_date = datetime.now()
-            e.save(update_fields=["return_date"])
-            self.holder = None
-        else:
-            pass
 
 
 class Event(models.Model):

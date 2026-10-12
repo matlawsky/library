@@ -12,6 +12,9 @@
             <div class="col-md-auto">
                 <div class="form-floating">
                     <form action="." method="POST"> {% csrf_token %}
+                        {{ form.non_field_errors }}
+                        {{ form.isbn | as_crispy_field }}
+                        {{ form.publication_text | as_crispy_field }}
                         {{ form.title | as_crispy_field }}
                         {{ form.subtitle | as_crispy_field }}
                         {{ form.authors | as_crispy_field }}

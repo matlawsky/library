@@ -1,6 +1,6 @@
 from django import forms
 from .models import Author, Book, Copy
-
+from .metadata import normalize_isbn, parse_publication
 
 COPY_MANAGEMENT_CHOICES = [
     ("borrow", "Borrow the book"),
@@ -15,9 +15,22 @@ class DateInput(forms.DateInput):
 
 class AddBookForm(forms.ModelForm):
     number_of_copies = forms.IntegerField(initial=0, min_value=0, max_value=100)
-    page_count = forms.IntegerField(min_value=1)
+    page_count = forms.IntegerField(min_value=1, required=False)
+    isbn = forms.CharField(required=False, max_length=32)
+    publication_text = forms.CharField(required=False, max_length=10)
     authors = forms.CharField()
     image_url = forms.URLField(widget=forms.HiddenInput(), required=False)
+
+    def clean_isbn(self):
+        return normalize_isbn(self.cleaned_data.get("isbn"))
+
+    def clean(self):
+        data = super().clean()
+        text, parsed = parse_publication(data.get("publication_text"))
+        if text:
+            data["publication_text"] = text
+            data["published_date"] = parsed
+        return data
 
     def clean_authors(self):
         value = self.cleaned_data["authors"]
@@ -32,6 +45,8 @@ class AddBookForm(forms.ModelForm):
         model = Book
         fields = (
             "title",
+            "isbn",
+            "publication_text",
             "subtitle",
             "description",
             "published_date",
@@ -40,7 +55,6 @@ class AddBookForm(forms.ModelForm):
         widgets = {
             "published_date": DateInput(),
         }
-
 
 class CopyReservationForm(forms.ModelForm):
     class Meta:
