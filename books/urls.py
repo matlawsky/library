@@ -1,5 +1,6 @@
 # books/urls.py
 from django.urls import path
+from .catalog_views import CatalogView
 from .views import (
     HomePageView,
     FindBooksView,
@@ -11,11 +12,13 @@ from .views import (
     CopyReservationView,
     MyBooksListView,
     AllEventsView,
+    add_copy
 )
 
+
 urlpatterns = [
-    path("", HomePageView.as_view(), name="home"),
-    path("find/", FindBooksView.as_view(), name="find_books"),
+    path("", CatalogView.as_view(), name="home"),
+    path("find/", CatalogView.as_view(), name="find_books"),
     path("mybooks/", MyBooksListView.as_view(), name="mybooks"),
     path("newbook/", CreateBookView.as_view(), name="add_book"),
     path("<uuid:pk>/", BookDetailView.as_view(), name="book_detail"),
@@ -28,7 +31,5 @@ urlpatterns = [
         name="copy_reserve",
     ),
     path("events/", AllEventsView.as_view(), name="events"),
+    path("<uuid:pk>/copies/add/", add_copy, name="add_copy"),
 ]
-
-from .views import add_copy
-urlpatterns += [path("<uuid:pk>/copies/add/", add_copy, name="add_copy")]

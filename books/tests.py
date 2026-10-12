@@ -180,6 +180,16 @@ class HistoryTests(LibraryCase):
         self.client.force_login(self.reader)
         self.assertIn(self.client.get(reverse("events")).status_code,[302,403])
 
+
+class SearchTests(LibraryCase):
+    def test_author_search_has_no_duplicates(self):
+        self.book.authors.add(Author.objects.create(name="Alice One"), Author.objects.create(name="Alice Two"))
+        response=self.client.get(reverse("find_books"),{"q":"Alice"})
+        self.assertEqual(len(response.context["books_list"]),1)
+    def test_availability_filter(self):
+        transition(self.copy.pk,self.reader,"reserve")
+        self.assertContains(self.client.get(reverse("find_books"),{"available":"1"}),"No matching books")
+
     ### Views logged out users can access
     # Home
     # Find books
