@@ -182,6 +182,8 @@ EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 DATE_INPUT_FORMATS = ["%d-%m-%Y"]
 
+GOOGLE_BOOKS_API_KEY = env.str("GOOGLE_BOOKS_API_KEY", "")
+
 # django-debug-toolbar
 import socket
 
